@@ -24,6 +24,7 @@ module.exports = new PassportLocalStrategy({
 			return done(err);
 		}
 
+		req.user = newUser;
 		return done(null);
 	});
 });

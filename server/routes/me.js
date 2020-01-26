@@ -3,7 +3,8 @@ function getMe(req, res) {
 		_id: req.user._id,
 		email: req.user.email,
 		name: req.user.name,
-		roles: req.user.roles
+		roles: req.user.roles,
+		isEmailVerified: req.user.isEmailVerified
 	}).end();
 }
 

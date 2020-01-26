@@ -1,6 +1,6 @@
 const passport = require('passport');
 const {validateBasicSignInSignUpForm} = require('../../helpers/form-validations');
-
+const { sendVerificationEmail, verificationEmailTypes } = require('../../helpers/email-verification')
 
 /**
  * Validate the sign up form
@@ -52,8 +52,10 @@ function signup(req, res, next) {
 			});
 		}
 
-		return res.json({});
-	})(req, res, next);
+		return sendVerificationEmail(req.user, verificationEmailTypes.WELCOME)
+      .then(payload => res.json(payload))
+      .catch(err => res.json(err))
+	})(req, res, next)
 }
 
 module.exports = signup;

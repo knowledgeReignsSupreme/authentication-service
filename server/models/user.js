@@ -24,6 +24,21 @@ const UserSchema = new mongoose.Schema({
 	},
 	tokenCreated: Date,
 	refreshTokenCreated: Date,
+	emailVerificationTokenCreated: Date,
+	isEmailVerified: {
+		type: Boolean,
+		default: false
+	},
+	lastVerifiedEmail: {
+		type: String,
+		required: false,
+	  index: {
+	    unique: true,
+	    partialFilterExpression: { lastVerifiedEmail: { $type: 'string' } },
+	  },
+	  default: null,
+	},
+	lastEmailChanged: Date
 });
 
 
@@ -54,6 +69,17 @@ UserSchema.methods.getRefreshToken = function getRefreshToken() {
 	}, config.refreshTokenSecret, {expiresIn: config.refreshTokenExpiration});
 };
 
+UserSchema.methods.getEmailVerificationToken = function getEmailVerificationToken() {
+	this.emailVerificationTokenCreated = new Date();
+	return this.getExistingEmailVerificationToken();
+};
+
+UserSchema.methods.getExistingEmailVerificationToken = function getExistingEmailVerificationToken() {
+	return jwt.sign({
+		sub: this._id,
+		created: this.emailVerificationTokenCreated.toJSON()
+	}, config.jwtSecret, {expiresIn: config.emailVerificationTokenExpiration});
+};
 
 /**
  * The pre-save hook method.

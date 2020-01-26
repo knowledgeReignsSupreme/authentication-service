@@ -4,11 +4,12 @@
 const config = require('../config');
 require('../server/models').connect(config.mongoUri);
 const User = require('mongoose').model('User');
-const { init } = require('./init-util.js')
+const { reset, init } = require('./init-util.js')
 
-init()
+reset()
+	.then(init)
 	.then(() => {
-		console.log('admin created successfully');
+		console.log('reset successfully');
 		process.exit(0);
 	})
 	.catch((err) => {

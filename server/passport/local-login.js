@@ -20,6 +20,10 @@ module.exports = new PassportLocalStrategy({
       return done({ code: 'INCORRECT_CREDENTIALS' })
     }
 
+    if (!user.isEmailVerified) {
+      return done({ code: 'EMAIL_VERIFICATION_REQUIRED' })
+    }
+
     return user.comparePassword(password.trim(), (passwordErr, isMatch) => {
       if (passwordErr) {
         return done({ code: 'FORM_SUBMISSION_FAILED', info: passwordErr })

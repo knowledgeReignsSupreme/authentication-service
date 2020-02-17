@@ -16,7 +16,7 @@ module.exports = {
 	mailProvider: {
 		service: process.env.MAIL_PROVIDER_SERVICE,
 		email: process.env.MAIL_PROVIDER_EMAIL,
-		authType: process.env.MAIL_PROVIDER_AUTH_TYPE,
+		authType: process.env.MAIL_PROVIDER_AUTH_TYPE || "basic",
 		password: process.env.MAIL_PROVIDER_PW
 	},
 	spamIntervals: {

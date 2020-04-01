@@ -1,12 +1,10 @@
 
-FROM node:13.3.0 AS nodeNpm
-COPY package.json package-lock.json ./
-RUN npm install
-FROM node:alpine
-COPY --from=nodeNpm node_modules node_modules 
-ENV PORT=9000
+FROM node:13.3.0
 RUN mkdir /app
 WORKDIR /app
 COPY . .
+ENV NODE_ENV=PROD
+RUN npm install
+ENV PORT=9000
 EXPOSE $PORT
 ENTRYPOINT npm start

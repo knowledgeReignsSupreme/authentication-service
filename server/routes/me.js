@@ -1,5 +1,5 @@
 function getMe(req, res) {
-	return res.status(200).jsonp({
+	return res.status(200).json({
 		_id: req.user._id,
 		email: req.user.email,
 		name: req.user.name,

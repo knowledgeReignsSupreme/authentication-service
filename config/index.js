@@ -1,4 +1,4 @@
-const roles = process.env.ROELS ? process.env.ROELS.split(',') : ['user', 'admin'];
+const roles = process.env.ROLES ? process.env.ROLES.split(',') : ['user', 'admin'];
 const privilegedRoles = process.env.PRIVILEGED_ROLES ? process.env.PRIVILEGED_ROLES.split(',') : ['admin'];
 
 module.exports = {

@@ -1,4 +1,4 @@
-const { verifyRefreshToken } = require('../../helpers/tokens')
+const { verifyRefreshToken } = require('../services/tokens')
 
 function refreshToken (req, res) {
 	if (!req.headers.authorization) {

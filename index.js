@@ -10,7 +10,7 @@ const morgan = require('morgan');
 const initiatePassport = require('./server/passport');
 const config = require('./config');
 const routes = require('./server/routes');
-const { loadEmailTemplates } = require('./helpers/mailer')
+const { loadEmailTemplates } = require('./server/services/mailer')
 
 // connect to the database and load models
 require('./server/models').connect(config.mongoUri);

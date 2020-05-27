@@ -1,5 +1,5 @@
 const User = require('mongoose').model('User')
-const config = require('../config')
+const config = require('../../config')
 const { mailer } = require('./mailer')
 
 const verificationEmailTypes = {
@@ -83,39 +83,36 @@ function getEmailVerificationToken(user, emailType) {
   }
   const shouldNotCreateNewToken = user.lastVerifiedEmail && emailType === verificationEmailTypes.REVERIFY
   const emailVerificationToken = shouldNotCreateNewToken ? user.getExistingEmailVerificationToken() : user.getEmailVerificationToken()
-  const to = emailType === verificationEmailTypes.ROLLBACK ? user.lastVerifiedEmail : user.email;
 
   if (shouldNotCreateNewToken) {
     return Promise.resolve(emailVerificationToken)
   } else {
     return user.save()
       .then(() => emailVerificationToken)
-      .catch(err => reject({ message: 'user update failed'}))
+      .catch(() => Promise.reject({ message: 'user update failed'}))
   }
 }
 
 function sendVerificationEmail(user, emailType) {
-  return new Promise((resolve, reject) => {
-    getEmailVerificationToken(user, emailType)
-      .then(token => {
-        getTemplate(emailType).then(templateData => {
-          const to = emailType === verificationEmailTypes.ROLLBACK ? user.lastVerifiedEmail : user.email;
-          const extraUrl = emailType === verificationEmailTypes.ROLLBACK ? 'rollback/' : '';
-          const emailVerificationUrl = config.applicationUrl + '/verification/email/' + extraUrl + token
-          templateData.template = templateData.template.replace('{{emailVerificationUrl}}', emailVerificationUrl)
-          templateData.template = templateData.template.replaceAll('{{applicationName}}', config.applicationName)
-          templateData.template = templateData.template.replaceAll('{{name}}', user.name)
+  return getEmailVerificationToken(user, emailType)
+    .then(token => {
+      return getTemplate(emailType).then(templateData => {
+        const to = emailType === verificationEmailTypes.ROLLBACK ? user.lastVerifiedEmail : user.email;
+        const extraUrl = emailType === verificationEmailTypes.ROLLBACK ? 'rollback/' : '';
+        const emailVerificationUrl = config.applicationUrl + '/verification/email/' + extraUrl + token
+        templateData.template = templateData.template.replace('{{emailVerificationUrl}}', emailVerificationUrl)
+        templateData.template = templateData.template.replaceAll('{{applicationName}}', config.applicationName)
+        templateData.template = templateData.template.replaceAll('{{name}}', user.name)
 
-          const mailOptions = {
-            to: to,
-            subject: templateData.subject,
-            html: templateData.template
-          }
+        const mailOptions = {
+          to: to,
+          subject: templateData.subject,
+          html: templateData.template
+        }
 
-          sendMail(mailOptions).then(resolve).catch(reject)
-        })
+        return sendMail(mailOptions)
       })
-  })
+    })
 }
 
 module.exports = { sendVerificationEmail, checkIsEmailVerified, verificationEmailTypes, getEmailVerificationToken }

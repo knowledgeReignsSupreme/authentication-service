@@ -88,7 +88,7 @@ UserSchema.pre('save', function saveHook(next) {
 	const user = this;
 
 	// define role for new user
-	if (!user._id && (!user.roles || user.roles.length === 0)) {
+	if (!user.roles || user.roles.length === 0) {
 		user.roles = [config.defaultRole];
 	}
 

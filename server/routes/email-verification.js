@@ -1,7 +1,9 @@
-const User = require('mongoose').model('User')
-const config = require('../../config')
-const { verifyEmailVerificationToken } = require('../../helpers/tokens')
-const { verificationEmailTypes, checkIsEmailVerified, sendVerificationEmail } = require('../../helpers/email-verification')
+const User = require('../models/user')
+const { Router } = require('express')
+const populateUser = require('../middleware/populate-user')
+
+const { verifyEmailVerificationToken } = require('../services/tokens')
+const { verificationEmailTypes, checkIsEmailVerified, sendVerificationEmail } = require('../services/email-verification')
 
 function resendVerificationEmail (req, res) {
   if (req.user) {
@@ -11,7 +13,7 @@ function resendVerificationEmail (req, res) {
       }
     })
   }
-  return checkIsEmailVerified({email: req.body.email})
+  return checkIsEmailVerified({ email: req.body.email })
     .then(user => sendVerificationEmail(user, verificationEmailTypes.RESEND))
     .then(result => res.json(result))
     .catch(err => {
@@ -28,7 +30,7 @@ function verifyEmail (req, res) {
   }
   return verifyEmailVerificationToken(req.body.token)
     .then(decoded => {
-      return checkIsEmailVerified({_id: decoded.userId})
+      return checkIsEmailVerified({ _id: decoded.userId })
         .then(user => {
           if (user.emailVerificationTokenCreated.toJSON() === decoded.created) {
             user.isEmailVerified = true
@@ -83,4 +85,11 @@ function rollbackEmail (req, res) {
     .catch(err => res.status(401).jsonp({ message: 'you are not authorized' }).end())
 }
 
-module.exports = { resendVerificationEmail, verifyEmail, rollbackEmail }
+const router = Router()
+
+router
+  .post('/api/verification/email', verifyEmail)
+  .post('/api/verification/email/resend', populateUser, resendVerificationEmail)
+  .post('/api/verification/email/rollback', rollbackEmail)
+
+module.exports = router

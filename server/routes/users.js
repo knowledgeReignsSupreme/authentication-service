@@ -1,7 +1,9 @@
-const User = require('mongoose').model('User')
+const User = require('../models/user')
+const { Router } = require('express')
+const populateUser = require('../middleware/populate-user')
+const { onlyPrivileged } = require('../middleware/auth-check')
 const { isObjectId } = require('../../helpers/mongo-utils')
-const { sendVerificationEmail, verificationEmailTypes } = require('../../helpers/email-verification')
-const config = require('../../config')
+
 const privilegedUserFields = 'email name roles isEmailVerified lastVerifiedEmail lastEmailChanged'
 
 function getUsers (req, res) {
@@ -39,91 +41,45 @@ function getUser (req, res) {
     .catch(() => res.status(404).jsonp({ message: 'user not exists' }).end())
 }
 
-function changeEmailVerified(user) {
-  if (user.isEmailVerified) {
-    user.isEmailVerified = false
-    user.lastVerifiedEmail = user.email
+async function createUser (req, res) {
+  const user = new User(req.body)
+
+  // privileged user creating this user, so no need to verify email
+  user.isEmailVerified = true;
+
+  try {
+    const { _id, name, email, roles } = await user.save()
+    res.status(200).json({ _id, name, email, roles }).end()
+  } catch (e) {
+    res.status(400).json({ message: 'user creation failed' }).end()
   }
-  user.lastEmailChanged = new Date()
 }
 
-function updateUser (req, res) {
+async function updateUser (req, res) {
   const body = req.body || {}
 
-  let emailChanged = false, rollbackEmailStatus, reverifyEmailStatus;
-  User.findById(req.params.userId)
-    .then(user => {
-      // Invalidate email verification
-      if (body.email && user.email !== body.email) {
-        // spam prevention
-        if (user.lastEmailChanged) {
-          const secondsDiff = (new Date() - user.lastEmailChanged) / 1000
-          if (secondsDiff > config.spamIntervals.changeEmail) {
-            changeEmailVerified(user)
-            emailChanged = true
-          } else {
-            const until = new Date(user.lastEmailChanged.getTime() + config.spamIntervals.changeEmail * 1000)
-            const err = new Error('CHANGE_EMAIL_SPAM')
-            err.until = until
-            throw err
-          }
-        } else {
-          changeEmailVerified(user)
-          emailChanged = true
-        }
-      }
-      return Object.assign(user, body).save()
-    })
-    .then(savedUser => {
-      // send rollback email first if exists
-      if (emailChanged && savedUser.lastVerifiedEmail) {
-        return sendVerificationEmail(savedUser, verificationEmailTypes.ROLLBACK)
-          .then(emailStatus => {
-            rollbackEmailStatus = emailStatus
-            return savedUser
-          })
-          .catch(err => {
-            rollbackEmailStatus = err
-            return savedUser
-          })
-      }
-      return savedUser
-    })
-    .then(savedUser => {
-      if (emailChanged) {
-        return sendVerificationEmail(savedUser, verificationEmailTypes.REVERIFY)
-          .then(emailStatus => {
-            reverifyEmailStatus = emailStatus
-            return savedUser
-          })
-          .catch(err => {
-            reverifyEmailStatus = err
-            return savedUser
-          })
-      }
-      return savedUser
-    })
-    .then(({ email, name, roles, _id }) => {
-      return res.status(200).jsonp({ email, name, roles, _id, rollbackEmailStatus, reverifyEmailStatus }).end()
-    })
-    .catch(err => {
-      if (err && err.message === 'CHANGE_EMAIL_SPAM') {
-        res.status(200).jsonp({
-          errors: {
-            '': err.message,
-            until: err.until
-          }
-        }).end()
-      } else {
-        res.status(400).jsonp({ message: 'user update failed' }).end()
-      }
-    })
+  try {
+    const user = await User.findById(req.params.userId)
+    const { email, name, roles, _id } = await Object.assign(user, body).save()
+    res.status(200).json({ email, name, roles, _id }).end()
+  } catch (e) {
+    res.status(400).json({ message: 'user update failed' }).end()
+  }
+}
+
+async function removeUser (req, res) {
+  try {
+    await User.deleteOne({ _id: req.params.userId })
+    res.status(200).json({ _id: req.params.userId }).end()
+  } catch (e) {
+    res.status(400).json({ message: 'user deletion failed' }).end()
+  }
 }
 
 /**
  * to dump last verified email for security reason
-*/
-function disableRollback(req, res) {
+ */
+function disableRollback (req, res) {
   User.findById(req.params.userId)
     .then(user => {
       if (user.lastVerifiedEmail) {
@@ -131,9 +87,19 @@ function disableRollback(req, res) {
         return user.save()
           .then(() => res.status(200).jsonp({}).end())
       }
-      return res.status(200).jsonp({ errors: {'': 'EMAIL_ROLLBACK_ALREADY_DISABLED'} }).end()
+      return res.status(200).jsonp({ errors: { '': 'EMAIL_ROLLBACK_ALREADY_DISABLED' } }).end()
     })
     .catch(err => res.status(400).jsonp({ message: 'disable email rollback failed' }).end())
 }
 
-module.exports = { getUsers, updateUser, getUser, disableRollback }
+const router = Router()
+
+router
+  .get('/api/users', populateUser, getUsers)
+  .post('/api/users', populateUser, createUser)
+  .get('/api/users/:userId', populateUser, getUser)
+  .put('/api/users/:userId', populateUser, onlyPrivileged, updateUser)
+  .delete('/api/users/:userId', populateUser, onlyPrivileged, removeUser)
+  .post('/api/users/:userId/disable-rollback', populateUser, onlyPrivileged, disableRollback)
+
+module.exports = router

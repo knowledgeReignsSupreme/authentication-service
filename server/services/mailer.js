@@ -1,4 +1,4 @@
-const config = require('../config')
+const config = require('../../config')
 const nodemailer = require('nodemailer')
 const fs = require('fs')
 const path = require('path')
@@ -42,7 +42,7 @@ function loadEmailTemplates() {
   return new Promise((resolve, reject) => {
     if (!isTemplatesLoaded) {
       const templates = []
-      const templatesDir = path.join(__dirname, '..', 'server', 'emailtemplates')
+      const templatesDir = path.join(__dirname, '..', 'emailtemplates')
       fs.readdir(templatesDir, (errDir, files) => {
         if (errDir) {
           return reject(errDir)

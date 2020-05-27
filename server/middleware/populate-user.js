@@ -1,4 +1,4 @@
-const { verifyToken } = require('../../helpers/tokens')
+const { verifyToken } = require('../services/tokens')
 const { privilegedRoles } = require('../../config')
 
 /**

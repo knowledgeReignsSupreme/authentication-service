@@ -7,7 +7,7 @@ module.exports = new PassportLocalStrategy({
   session: false,
   passReqToCallback: true
 }, (req, email, password, done) => {
-  const query = { email: email.trim() }
+  const query = { email: email.trim(), tenant: req.headers.tenant }
   if (req.body.roles && req.body.roles instanceof Array) {
     query.roles = { $in: req.body.roles }
   }

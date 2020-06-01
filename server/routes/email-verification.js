@@ -13,7 +13,7 @@ function resendVerificationEmail (req, res) {
       }
     })
   }
-  return checkIsEmailVerified({ email: req.body.email })
+  return checkIsEmailVerified({ email: req.body.email, tenant: req.headers.tenant })
     .then(user => sendVerificationEmail(user, verificationEmailTypes.RESEND))
     .then(result => res.json(result))
     .catch(err => {
@@ -28,7 +28,7 @@ function verifyEmail (req, res) {
   if (!req.body || !req.body.token) {
     return res.status(400).jsonp({ message: 'email verification token required' }).end()
   }
-  return verifyEmailVerificationToken(req.body.token)
+  return verifyEmailVerificationToken(req.body.token, req.headers.tenant)
     .then(decoded => {
       return checkIsEmailVerified({ _id: decoded.userId })
         .then(user => {
@@ -55,9 +55,9 @@ function rollbackEmail (req, res) {
   if (!req.body || !req.body.token) {
     return res.status(400).jsonp({ message: 'email rollback token required' }).end()
   }
-  return verifyEmailVerificationToken(req.body.token)
+  return verifyEmailVerificationToken(req.body.token, req.headers.tenant)
     .then(decoded => {
-      return User.findById(decoded.userId)
+      return User.findOne({ _id: decoded.userId, tenant: req.headers.tenant })
         .then(user => {
           if (user.emailVerificationTokenCreated.toJSON() === decoded.created && user.email !== user.lastVerifiedEmail) {
             if (!user.lastVerifiedEmail) {

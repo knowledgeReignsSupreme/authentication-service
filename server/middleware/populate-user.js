@@ -11,8 +11,9 @@ module.exports = (req, res, next) => {
 
   // get the last part from a authorization header string like "bearer token-value"
   const token = req.headers.authorization.split(' ')[1]
+  const tenant = req.headers.tenant = req.headers.tenant || '0'
 
-  return verifyToken(token)
+  return verifyToken(token, tenant)
     .then(user => {
       // pass user details onto next route
       req.user = user

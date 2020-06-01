@@ -7,8 +7,9 @@ function refreshToken (req, res) {
 
 	// get the last part from a authorization header string like "bearer token-value"
 	const token = req.headers.authorization.split(' ')[1]
+	const tenant = req.headers.tenant = req.headers.tenant || '0'
 
-	return verifyRefreshToken(token).then(user => {
+	return verifyRefreshToken(token, tenant).then(user => {
 		const token = user.getToken()
 		const refreshToken = user.getRefreshToken()
 

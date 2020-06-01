@@ -17,7 +17,10 @@ function getUsers (req, res) {
   if (!(isPrivileged || users.length)) {
     return res.status(200).jsonp([]).end()
   }
-  return User.find(isPrivileged && !users.length ? {} : { _id: { $in: users } })
+  const query = isPrivileged && !users.length ? {} : { _id: { $in: users } }
+  query.tenant = req.headers.tenant
+
+  return User.find(query)
     .select(isPrivileged ? privilegedUserFields : 'name')
     .lean()
     .then(users => {
@@ -29,7 +32,7 @@ function getUsers (req, res) {
 function getUser (req, res) {
   const isPrivileged = !!(req.user && req.user.isPrivileged)
 
-  return User.findById(req.params.userId)
+  return User.findOne({ _id: req.params.userId, tenant: req.headers.tenant })
     .select(isPrivileged ? privilegedUserFields : 'name')
     .lean()
     .then(user => {
@@ -43,9 +46,10 @@ function getUser (req, res) {
 
 async function createUser (req, res) {
   const user = new User(req.body)
+  user.tenant = req.headers.tenant
 
   // privileged user creating this user, so no need to verify email
-  user.isEmailVerified = true;
+  user.isEmailVerified = true
 
   try {
     const { _id, name, email, roles } = await user.save()
@@ -56,12 +60,12 @@ async function createUser (req, res) {
 }
 
 async function updateUser (req, res) {
-  const body = req.body || {}
+  const { email, roles, name } = req.body || {}
 
   try {
-    const user = await User.findById(req.params.userId)
-    const { email, name, roles, _id } = await Object.assign(user, body).save()
-    res.status(200).json({ email, name, roles, _id }).end()
+    const user = await User.findOne({ _id: req.params.userId, tenant: req.headers.tenant })
+    await Object.assign(user, { email, roles, name }).save()
+    res.status(200).json({ email: user.email, name: user.name, roles: user.roles, _id: user._id }).end()
   } catch (e) {
     res.status(400).json({ message: 'user update failed' }).end()
   }
@@ -69,7 +73,7 @@ async function updateUser (req, res) {
 
 async function removeUser (req, res) {
   try {
-    await User.deleteOne({ _id: req.params.userId })
+    await User.deleteOne({ _id: req.params.userId, tenant: req.headers.tenant })
     res.status(200).json({ _id: req.params.userId }).end()
   } catch (e) {
     res.status(400).json({ message: 'user deletion failed' }).end()
@@ -80,7 +84,7 @@ async function removeUser (req, res) {
  * to dump last verified email for security reason
  */
 function disableRollback (req, res) {
-  User.findById(req.params.userId)
+  User.findOne({ _id: req.params.userId, tenant: req.headers.tenant })
     .then(user => {
       if (user.lastVerifiedEmail) {
         user.lastVerifiedEmail = null

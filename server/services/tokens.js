@@ -2,11 +2,11 @@ const jwt = require('jsonwebtoken')
 const User = require('mongoose').model('User')
 const config = require('../../config')
 
-function verifyToken (token) {
+function verifyToken (token, tenant) {
   if (!token.trim()) {
     return Promise.reject()
   }
-  return verify(token, config.jwtSecret).then(({ user, decoded }) => {
+  return verify(token, tenant, config.jwtSecret).then(({ user, decoded }) => {
     if (user.tokenCreated.toJSON() === decoded.created) {
       return user
     }
@@ -14,8 +14,8 @@ function verifyToken (token) {
   })
 }
 
-function verifyRefreshToken (refreshToken) {
-  return verify(refreshToken, config.refreshTokenSecret).then(({ user, decoded }) => {
+function verifyRefreshToken (refreshToken, tenant) {
+  return verify(refreshToken, tenant, config.refreshTokenSecret).then(({ user, decoded }) => {
     if (user.refreshTokenCreated.toJSON() === decoded.created) {
       return user
     }
@@ -23,10 +23,10 @@ function verifyRefreshToken (refreshToken) {
   })
 }
 
-function verify (token, secret) {
+function verify (token, tenant, secret) {
   return new Promise((resolve, reject) => {
     jwt.verify(token, secret, (err, decoded) => {
-      if (err || !decoded) {
+      if (err || !decoded || decoded.tenant !== tenant) {
         // the 401 code is for unauthorized status
         return reject(err || { message: 'token is empty' })
       }
@@ -34,7 +34,7 @@ function verify (token, secret) {
       const userId = decoded.sub
 
       // check if a user exists
-      return User.findById(userId, (userErr, user) => {
+      return User.findOne({ _id: userId, tenant }, (userErr, user) => {
         if (userErr || !user) {
           return reject(userErr || { message: 'user not exists' })
         }
@@ -48,15 +48,15 @@ function verify (token, secret) {
   })
 }
 
-function verifyEmailVerificationToken (token) {
+function verifyEmailVerificationToken (token, tenant) {
   return new Promise((resolve, reject) => {
     jwt.verify(token, config.jwtSecret, (err, decoded) => {
-      if (err || !decoded) {
+      if (err || !decoded || decoded.tenant !== tenant) {
         // the 401 code is for unauthorized status
         return reject(err || { message: 'token is empty' })
       }
 
-      resolve({userId: decoded.sub, created: decoded.created})
+      resolve({ userId: decoded.sub, created: decoded.created })
     })
   })
 }

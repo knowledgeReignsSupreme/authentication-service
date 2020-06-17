@@ -1,12 +1,13 @@
 {
-  "name": "authentication-service",
+  "name": "@greenpress/auth",
   "version": "1.0.0",
   "description": "Express Passport authentication service",
   "keywords": [
     "express",
     "passport",
     "mongoose",
-    "es6"
+    "authentication service",
+    "greenpress"
   ],
   "engines": {
     "npm": ">=5",
@@ -17,7 +18,11 @@
     "test": "jest",
     "restart:dev": "node helpers/reset; npm start"
   },
-  "author": "David Meir-Levy",
+  "main": "index.js",
+  "bin": {
+    "greenpress-auth": "index.js"
+  },
+  "author": "David Meir-Levy <davidmeirlevy@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -34,5 +39,16 @@
   },
   "devDependencies": {
     "jest": "^24.9.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/greenpress/authentication-service/issues"
+  },
+  "homepage": "https://github.com/greenpress/authentication-service#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/greenpress/authentication-service.git"
   }
 }

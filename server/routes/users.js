@@ -1,3 +1,4 @@
+const { Types: { ObjectId } } = require('mongoose')
 const User = require('../models/user')
 const { Router } = require('express')
 const populateUser = require('../middleware/populate-user')
@@ -11,12 +12,19 @@ function getUsers (req, res) {
 
   const users = (req.query.users || '')
     .split(',')
-    .map(id => id.trim())
-    .filter(id => isObjectId(id))
+    .map(id => {
+      const val = id.trim()
+      if (isObjectId(val)) {
+        return ObjectId(val)
+      }
+      return false
+    })
+    .filter(Boolean)
 
   if (!(isPrivileged || users.length)) {
-    return res.status(200).jsonp([]).end()
+    return res.status(200).json([]).end()
   }
+
   const query = isPrivileged && !users.length ? {} : { _id: { $in: users } }
   query.tenant = req.headers.tenant
 
@@ -24,9 +32,9 @@ function getUsers (req, res) {
     .select(isPrivileged ? privilegedUserFields : 'name')
     .lean()
     .then(users => {
-      return res.status(200).jsonp(users || []).end()
+      return res.status(200).json(users || []).end()
     })
-    .catch(() => res.status(404).jsonp({ message: 'could not load users' }).end())
+    .catch(() => res.status(404).json({ message: 'could not load users' }).end())
 }
 
 function getUser (req, res) {
@@ -39,9 +47,9 @@ function getUser (req, res) {
       if (!user) {
         return Promise.reject(null)
       }
-      return res.status(200).jsonp(user).end()
+      return res.status(200).json(user).end()
     })
-    .catch(() => res.status(404).jsonp({ message: 'user not exists' }).end())
+    .catch(() => res.status(404).json({ message: 'user not exists' }).end())
 }
 
 async function createUser (req, res) {
@@ -89,11 +97,11 @@ function disableRollback (req, res) {
       if (user.lastVerifiedEmail) {
         user.lastVerifiedEmail = null
         return user.save()
-          .then(() => res.status(200).jsonp({}).end())
+          .then(() => res.status(200).json({}).end())
       }
-      return res.status(200).jsonp({ errors: { '': 'EMAIL_ROLLBACK_ALREADY_DISABLED' } }).end()
+      return res.status(200).json({ errors: { '': 'EMAIL_ROLLBACK_ALREADY_DISABLED' } }).end()
     })
-    .catch(err => res.status(400).jsonp({ message: 'disable email rollback failed' }).end())
+    .catch(err => res.status(400).json({ message: 'disable email rollback failed' }).end())
 }
 
 const router = Router()

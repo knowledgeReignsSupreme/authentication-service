@@ -68,7 +68,9 @@ UserSchema.methods.getToken = function getToken () {
   return jwt.sign({
     sub: this._id,
     tenant: this.tenant,
-    created: this.tokenCreated.toJSON()
+    email: this.email,
+    name: this.name,
+    roles: this.roles
   }, config.jwtSecret, { expiresIn: config.tokenExpiration })
 }
 

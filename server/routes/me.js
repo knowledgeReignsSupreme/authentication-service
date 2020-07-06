@@ -1,11 +1,8 @@
-function getMe(req, res) {
-	return res.status(200).json({
-		_id: req.user._id,
-		email: req.user.email,
-		name: req.user.name,
-		roles: req.user.roles,
-		isEmailVerified: req.user.isEmailVerified
-	}).end();
+module.exports = function getMe (req, res) {
+  return res.status(200).json({
+    _id: req.userPayload.sub,
+    email: req.userPayload.email,
+    name: req.userPayload.name,
+    roles: req.userPayload.roles,
+  }).end()
 }
-
-module.exports = getMe;

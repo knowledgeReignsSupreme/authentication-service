@@ -14,7 +14,7 @@ function refreshToken (req, res) {
 		const refreshToken = user.getRefreshToken()
 
 		return user.save().then(() => {
-			return res.jsonp({
+			return res.json({
 				payload: {
 					user: {
 						email: user.email,

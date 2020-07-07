@@ -1,15 +1,13 @@
-function routes (app) {
-  const verifyUser = require('../middleware/verify-user')
-  const { onlyAuthenticated } = require('../middleware/auth-check')
+const app = require('@greenpress/api-kit').app()
 
-  app
-    .post('/api/signin', require('../controllers/signin'))
-    .post('/api/signup', require('../controllers/signup'))
-    .post('/api/token/refresh', require('./refresh-token'))
-    .get('/api/me', verifyUser, onlyAuthenticated, require('./me'))
+const verifyUser = require('../middleware/verify-user')
+const { onlyAuthenticated } = require('../middleware/auth-check')
 
-  app.use(require('./users'))
-  app.use(require('./email-verification'))
-}
+app
+  .post('/api/signin', require('../controllers/signin'))
+  .post('/api/signup', require('../controllers/signup'))
+  .post('/api/token/refresh', require('./refresh-token'))
+  .get('/api/me', verifyUser, onlyAuthenticated, require('./me'))
 
-module.exports = routes
+app.use(require('./users'))
+app.use(require('./email-verification'))

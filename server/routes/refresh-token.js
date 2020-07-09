@@ -1,32 +1,40 @@
+const User = require('../models/user')
 const { verifyRefreshToken } = require('../services/tokens')
 
-function refreshToken (req, res) {
-	if (!req.headers.authorization) {
-		return res.status(401).end()
-	}
+module.exports = async function refreshToken (req, res) {
+  if (!req.headers.authorization) {
+    return res.status(401).end()
+  }
 
-	// get the last part from a authorization header string like "bearer token-value"
-	const token = req.headers.authorization.split(' ')[1]
-	const tenant = req.headers.tenant = req.headers.tenant || '0'
+  // get the last part from a authorization header string like "bearer token-value"
+  const token = req.headers.authorization.split(' ')[1]
+  const tenant = req.headers.tenant = req.headers.tenant || '0'
 
-	return verifyRefreshToken(token, tenant).then(user => {
-		const token = user.getToken()
-		const refreshToken = user.getRefreshToken()
+  try {
+    const decoded = await verifyRefreshToken(token, tenant)
+    const user = await User.findOne({ _id: decoded.sub, tenant: decoded.tenant })
 
-		return user.save().then(() => {
-			return res.json({
-				payload: {
-					user: {
-						email: user.email,
-						name: user.name,
-						roles: user.roles,
-					},
-					token,
-					refreshToken,
-				}
-			}).end()
-		})
-	}).catch(() => res.status(401).end())
+    if (user.refreshTokenCreated.toJSON() !== decoded.created) {
+      throw new Error('refresh token not valid')
+    }
+
+    const newToken = user.getToken()
+    const refreshToken = user.getRefreshToken()
+
+    await user.save()
+
+    return res.json({
+      payload: {
+        user: {
+          email: user.email,
+          name: user.name,
+          roles: user.roles,
+        },
+        token: newToken,
+        refreshToken,
+      }
+    }).end()
+  } catch (e) {
+    res.status(401).end()
+  }
 }
-
-module.exports = refreshToken

@@ -9,17 +9,12 @@ function verifyToken (token, tenant) {
 }
 
 function verifyRefreshToken (refreshToken, tenant) {
-  return verify(refreshToken, tenant, refreshTokenSecret).then(({ user, decoded }) => {
-    if (user.refreshTokenCreated.toJSON() === decoded.created) {
-      return user
-    }
-    return Promise.reject()
-  })
+  return verify(refreshToken, tenant, refreshTokenSecret);
 }
 
-function verify (token, tenant) {
+function verify (token, tenant, secret) {
   return new Promise((resolve, reject) => {
-    jwt.verify(token, jwtSecret, (err, decoded) => {
+    jwt.verify(token, secret, (err, decoded) => {
       if (err || !decoded || decoded.tenant !== tenant) {
         // the 401 code is for unauthorized status
         return reject(err || { message: 'token is empty' })

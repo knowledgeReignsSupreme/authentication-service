@@ -35,7 +35,7 @@ function getUsers (req, res) {
 }
 
 function getUser (req, res) {
-  const isPrivileged = !!(req.userPayload && req.userPayload.userPayload)
+  const isPrivileged = !!(req.userPayload && req.userPayload.isPrivileged)
 
   return User.findOne({ _id: req.params.userId, tenant: req.headers.tenant })
     .select(isPrivileged ? privilegedUserFields : 'name')

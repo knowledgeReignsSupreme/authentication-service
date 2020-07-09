@@ -24,32 +24,32 @@ function signin (req, res, next) {
   const validationErrors = validateSignInForm(req.body)
 
   if (Object.keys(validationErrors).length > 0) {
-    return res.json({ errors: validationErrors })
+    return res.status(401).json({ errors: validationErrors })
   }
 
   return passport.authenticate('local-login', (error, data) => {
     if (error !== null) {
-      return res.json({
+      return res.status(401).json({
         errors: {
           [error.code === 'INCORRECT_CREDENTIALS' ? 'password' : '']: error
         }
       })
     }
     if (!data) {
-      return res.json({
+      return res.status(401).json({
         errors: {
           'password': 'password is incorrect'
         }
       })
     }
     const { token, refreshToken, user } = data
-    return res.json({
+    return res.status(200).json({
       payload: {
         token,
         refreshToken,
         user
       }
-    })
+    }).end()
   })(req, res, next)
 }
 

@@ -65,7 +65,7 @@ async function createUser (req, res) {
 }
 
 async function updateUser (req, res) {
-  const { email, roles, name } = req.body || {}
+  const { email, roles, name, password } = req.body || {}
 
   try {
     const user = await User.findOne({ _id: req.params.userId, tenant: req.headers.tenant })
@@ -77,6 +77,9 @@ async function updateUser (req, res) {
     }
     if (name) {
       user.name = name
+    }
+    if (password) {
+      user.password = password
     }
     await user.save()
     res.status(200).json({ email: user.email, name: user.name, roles: user.roles, _id: user._id }).end()

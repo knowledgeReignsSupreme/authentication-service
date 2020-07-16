@@ -69,7 +69,16 @@ async function updateUser (req, res) {
 
   try {
     const user = await User.findOne({ _id: req.params.userId, tenant: req.headers.tenant })
-    await Object.assign(user, { email, roles, name }).save()
+    if (email) {
+      user.email = email
+    }
+    if (roles) {
+      user.roles = roles
+    }
+    if (name) {
+      user.name = name
+    }
+    await user.save()
     res.status(200).json({ email: user.email, name: user.name, roles: user.roles, _id: user._id }).end()
   } catch (e) {
     res.status(400).json({ message: 'user update failed' }).end()

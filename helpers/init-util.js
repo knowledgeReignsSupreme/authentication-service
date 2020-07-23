@@ -7,9 +7,9 @@ const config = require('../config')
 function init () {
   const user = new User({
     tenant: process.env.TENANT,
-    email: 'test@test.com',
+    email: process.env.EMAIL || 'test@test.com',
     name: 'Administrator',
-    password: 'admin',
+    password: process.env.PASSWORD || 'admin',
     roles: [config.privilegedRoles[0]],
     isEmailVerified: true,
     emailVerificationTokenCreated: new Date()

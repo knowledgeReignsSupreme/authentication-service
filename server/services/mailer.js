@@ -38,54 +38,6 @@ function loadEmailTemplate(templatePath) {
  *
  * @returns {object} Promise
  */
-function loadEmailTemplates() {
-  return new Promise((resolve, reject) => {
-    if (!isTemplatesLoaded) {
-      const templates = []
-      const templatesDir = path.join(__dirname, '..', 'emailtemplates')
-      fs.readdir(templatesDir, (errDir, files) => {
-        if (errDir) {
-          return reject(errDir)
-        }
-        const errors = []
-        files
-          .reduce(
-            (chain, file) => {
-              return chain.then(() => {
-                // filter only html files
-                if (file.substring(file.lastIndexOf('.')) === '.html') {
-                  const templatePath = path.join(templatesDir, file)
-                  const index = file.substring(0, file.lastIndexOf('.'))
-                  return loadEmailTemplate(templatePath)
-                    .then((template) => {
-                      templates[index] = template
-                    })
-                    .catch((err) => {
-                      templates[index] = ''
-                      errors[index] = 'email template not found'
-                    })
-                } else {
-                  return Promise.resolve()
-                }
-              })
-            },
-            Promise.resolve()
-          )
-          .then(() => {
-            if (errors.length > 0) {
-              return reject(errors)
-            }
-            isTemplatesLoaded = true
-            emailTemplates = templates
-            return resolve()
-          })
-          .catch((err) => reject(err))
-      })
-    } else {
-      return resolve()
-    }
-  })
-}
 
 const smtpTransport = createEmailTransport()
 
@@ -113,4 +65,4 @@ mailer.getTemplate = (templateIndex) => {
   return ''
 }
 
-module.exports = { mailer, loadEmailTemplates }
+module.exports = { mailer }

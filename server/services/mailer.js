@@ -22,17 +22,6 @@ function createEmailTransport() {
   return nodemailer.createTransport(smtpOptions)
 }
 
-function loadEmailTemplate(templatePath) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(templatePath, 'utf8', (err, template) => {
-      if (err) {
-        return reject(err)
-      }
-      return resolve(template)
-    })
-  })
-}
-
 /**
  * load all html files in ../server/emailtemplates directory
  *

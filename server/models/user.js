@@ -1,7 +1,9 @@
 const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs')
 const config = require('../../config')
+const { createNewToken } = require('../services/tokens');
 
 // define the User model schema
 const UserSchema = new mongoose.Schema({
@@ -27,23 +29,16 @@ const UserSchema = new mongoose.Schema({
       return Promise.resolve()
     }
   },
-  tokenCreated: Date,
-  refreshTokenCreated: Date,
-  emailVerificationTokenCreated: Date,
-  isEmailVerified: {
-    type: Boolean,
-    default: false
+  tokens: {
+	  type: [{
+		  kind: {
+			  type: String,
+			  enum: ['cookie', 'oauth'],
+			  default: 'cookie'
+		  },
+		  tokenIdentifier: String
+	  }]
   },
-  lastVerifiedEmail: {
-    type: String,
-    required: false,
-    index: {
-      unique: true,
-      partialFilterExpression: { lastVerifiedEmail: { $type: 'string' } },
-    },
-    default: null,
-  },
-  lastEmailChanged: Date,
   created: {
     type: Date,
     default: Date.now
@@ -64,7 +59,6 @@ UserSchema.methods.comparePassword = function comparePassword (password, callbac
 }
 
 UserSchema.methods.getToken = function getToken () {
-  this.tokenCreated = new Date()
   return jwt.sign({
     sub: this._id,
     tenant: this.tenant,
@@ -75,25 +69,28 @@ UserSchema.methods.getToken = function getToken () {
 }
 
 UserSchema.methods.getRefreshToken = function getRefreshToken () {
-  this.refreshTokenCreated = new Date()
+  const creationDate = Date.now();	
+
+  this.tokens.push(createNewToken('oauth', creationDate));
+
   return jwt.sign({
     sub: this._id,
     tenant: this.tenant,
-    created: this.refreshTokenCreated.toJSON()
+    created: creationDate.toJSON()
   }, config.refreshTokenSecret, { expiresIn: config.refreshTokenExpiration })
 }
 
-UserSchema.methods.getEmailVerificationToken = function getEmailVerificationToken () {
-  this.emailVerificationTokenCreated = new Date()
-  return this.getExistingEmailVerificationToken()
-}
+UserSchema.methods.getCookieToken = function getCookie (cookie) {
+  this.tokens.push(createNewToken('cookie'));
 
-UserSchema.methods.getExistingEmailVerificationToken = function getExistingEmailVerificationToken () {
   return jwt.sign({
-    sub: this._id,
-    tenant: this.tenant,
-    created: this.emailVerificationTokenCreated.toJSON()
-  }, config.jwtSecret, { expiresIn: config.emailVerificationTokenExpiration })
+	  sub: this._id,
+	  tenant: this.tenant,
+	  email: this.email,
+	  name: this.name,
+	  roles: this.roles,
+	  tokenIdentifier: this.tokens[this.tokens.length - 1].tokenIdentifier
+  }, config.jwtSecret, { expiresIn: config.tokenExpiration});
 }
 
 /**

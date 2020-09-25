@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken')
 const { jwtSecret, refreshTokenSecret } = require('../../config')
 
+const uniqueIdLen = 20;
+
 function verifyToken (token, tenant) {
   if (!token.trim()) {
     return Promise.reject()
@@ -24,21 +26,16 @@ function verify (token, tenant, secret) {
   })
 }
 
-function verifyEmailVerificationToken (token, tenant) {
-  return new Promise((resolve, reject) => {
-    jwt.verify(token, jwtSecret, (err, decoded) => {
-      if (err || !decoded || decoded.tenant !== tenant) {
-        // the 401 code is for unauthorized status
-        return reject(err || { message: 'token is empty' })
-      }
-
-      resolve({ userId: decoded.sub, created: decoded.created })
-    })
-  })
+function createNewToken(kind, creationTime = Date.now()) {
+	return {
+		kind,
+		tokenIdentifier: creationTime.toString() + Randomstring.generate(uniqueIdLen)
+	};
 }
+
 
 module.exports = {
   verifyToken,
   verifyRefreshToken,
-  verifyEmailVerificationToken
+  createNewToken
 }

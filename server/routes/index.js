@@ -10,4 +10,3 @@ app
   .get('/api/me', verifyUser, onlyAuthenticated, require('./me'))
 
 app.use(require('./users'))
-app.use(require('./email-verification'))

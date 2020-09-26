@@ -11,7 +11,7 @@ describe('Auth Check middlewares', () => {
         onlyAuthenticated(emptyRequest, resMock)
 
         expect(resMock.status).toBeCalledWith(401)
-        expect(resMock.jsonp).toBeCalledWith({ message: 'you are not authorized' })
+        expect(resMock.json).toBeCalledWith({ message: 'you are not authorized' })
         expect(resMock.end).toBeCalled()
 
       })
@@ -27,7 +27,7 @@ describe('Auth Check middlewares', () => {
 
     describe('When get request with a valid user', () => {
       const reqWithUser = {
-        user: {}
+				userPayload: {}
       }
       it('should continue to next middleware', () => {
         const resMock = getExpressResMock()

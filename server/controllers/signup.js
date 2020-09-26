@@ -1,4 +1,5 @@
 const passport = require('passport')
+const { cookieTokenExpiration } = require('../../config')
 const { validateBasicSignInSignUpForm } = require('../../helpers/form-validations')
 
 /**
@@ -33,7 +34,7 @@ function signup (req, res, next) {
     return res.json({ errors: validationErrors })
   }
 
-  return passport.authenticate('local-signup', (err) => {
+  return passport.authenticate('local-signup', (err, data) => {
     if (err) {
       if (err.name === 'MongoError' && err.code === 11000) {
         // the 11000 Mongo code is for a duplication email error
@@ -50,7 +51,22 @@ function signup (req, res, next) {
         }
       })
     }
+		const { token, refreshToken, cookieToken, user } = data
 
+		if (cookieToken) {
+			res.cookie('token', cookieToken, { maxAge: cookieTokenExpiration, httpOnly: true })
+			return res.status(200).json({
+				payload: { user }
+			}).end()
+		} else {
+			return res.status(200).json({
+				payload: {
+					token,
+					refreshToken,
+					user
+				}
+			}).end()
+		}
   })(req, res, next)
 }
 

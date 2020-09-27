@@ -13,6 +13,14 @@ async function getUser (query) {
 	throw { code: 'INCORRECT_CREDENTIALS' }
 }
 
+function updateUser (user, tenant = null, email = null, password = null, name = null, roles = null) {
+
+}
+
+function deleteUser(user) {
+
+}
+
 function comparePassword (user, password) {
 	return new Promise((resolve, reject) => {
 		return user.comparePassword(password.trim(), (passwordErr, isMatch) => {
@@ -37,9 +45,17 @@ function setToken (user, authType) {
 	throw { code: 'INVALID AUTH TYPE' }
 }
 
+function updateToken (user, currentToken, newToken) {
+
+}
+
+function deleteToken(user, token) {
+
+}
+
 function setOAuthAuthentication (user) {
-	const token = user.getToken()
-	const refreshToken = user.getRefreshToken()
+	const token = user.getToken('oauth');
+	const refreshToken = user.getRefreshToken();
 
 	return user.save().then(() => {
 		return {
@@ -51,11 +67,15 @@ function setOAuthAuthentication (user) {
 }
 
 function setCookieAuthentication (user) {
-	return { user, cookieToken: null }
+	return { user, cookieToken: user.getToken('cookie') }
 }
 
 module.exports = {
 	getUser,
+	updateUser,
+	deleteUser,
 	comparePassword,
-	setToken
+	setToken,
+	updateToken,
+	deleteToken
 }

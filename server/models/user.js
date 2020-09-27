@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const config = require('../../config')
+const { createUniqueId } = require('../services/tokens')
 
 // define the User model schema
 const UserSchema = new mongoose.Schema({
@@ -27,23 +28,16 @@ const UserSchema = new mongoose.Schema({
       return Promise.resolve()
     }
   },
-  tokenCreated: Date,
-  refreshTokenCreated: Date,
-  emailVerificationTokenCreated: Date,
-  isEmailVerified: {
-    type: Boolean,
-    default: false
+  tokens: {
+	type: [{
+		kind: {
+			type: String,
+			enum: ['cookie', 'oauth'],
+			default: 'cookie'
+		},
+		tokenIdentifier: String
+	}]
   },
-  lastVerifiedEmail: {
-    type: String,
-    required: false,
-    index: {
-      unique: true,
-      partialFilterExpression: { lastVerifiedEmail: { $type: 'string' } },
-    },
-    default: null,
-  },
-  lastEmailChanged: Date,
   created: {
     type: Date,
     default: Date.now
@@ -63,26 +57,41 @@ UserSchema.methods.comparePassword = function comparePassword (password, callbac
   bcrypt.compare(password, this.password, callback)
 }
 
-UserSchema.methods.getToken = function getToken () {
-  this.tokenCreated = new Date()
-  return jwt.sign({
+UserSchema.methods.getToken = function getToken (authType) {
+  const secretParams = {
     sub: this._id,
-    tenant: this.tenant,
-    email: this.email,
-    name: this.name,
-    roles: this.roles
-  }, config.jwtSecret, { expiresIn: config.tokenExpiration })
+	tenant: this.tenant,
+	email: this.email,
+	name: this.name,
+	roles: this.roles  
+  }
+
+  if (authType === 'cookie') {
+	const tokenIdentifier = createUniqueId();
+	secretParams.tokenIdentifier = tokenIdentifier;
+	this.tokens.push({
+		kind: authType, 
+		tokenIdentifier
+	});
+  }
+
+  return jwt.sign(secretParams, config.jwtSecret, { expiresIn: config.tokenExpiration })
 }
 
 UserSchema.methods.getRefreshToken = function getRefreshToken () {
-  this.refreshTokenCreated = new Date()
+  const creationTime = Date.now();
+	
+  this.tokens.push({
+	kind: 'cookie', 
+	tokenIdentifier: createUniqueId(creationTime)
+  });
+
   return jwt.sign({
     sub: this._id,
     tenant: this.tenant,
-    created: this.refreshTokenCreated.toJSON()
+	created: creationTime.toJSON()
   }, config.refreshTokenSecret, { expiresIn: config.refreshTokenExpiration })
 }
-
 
 /**
  * The pre-save hook method.

@@ -93,6 +93,13 @@ UserSchema.methods.getRefreshToken = function getRefreshToken () {
   }, config.refreshTokenSecret, { expiresIn: config.refreshTokenExpiration })
 }
 
+UserSchema.methods.updateToken = function updateToken(authType, currentToken, newToken) {
+	this.tokens = this.tokens.filter(token => token.kind === authType && token.tokenIdentifier === currentToken);
+	this.tokens.push({ kind:authType, tokenIdentifier: newToken });
+
+	return this.save();
+}
+
 /**
  * The pre-save hook method.
  */

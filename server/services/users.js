@@ -45,11 +45,12 @@ function setToken (user, authType) {
 	throw { code: 'INVALID AUTH TYPE' }
 }
 
-function updateToken (user, currentToken, newToken) {
-
+function updateToken (user, authType, currentToken, newToken) {
+	return user.updateToken(authType, currentToken, newToken)
+	       .catch(err => Promise.reject({ code: 'UPDATE TOKEN FAILED', info: err });
 }
 
-function deleteToken(user, token) {
+function deleteToken(user, authType, token) {
 
 }
 

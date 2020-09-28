@@ -47,7 +47,7 @@ function setToken (user, authType) {
 
 function updateToken (user, authType, currentToken, newToken) {
 	return user.updateToken(authType, currentToken, newToken)
-	       .catch(err => Promise.reject({ code: 'UPDATE TOKEN FAILED', info: err });
+	       .catch(err => Promise.reject({ code: 'UPDATE TOKEN FAILED', info: err }));
 }
 
 function deleteToken(user, authType, token) {

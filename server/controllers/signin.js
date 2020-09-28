@@ -1,25 +1,5 @@
 const passport = require('passport')
-const { cookieTokenExpiration } = require('../../config')
-const { validateBasicSignInSignUpForm } = require('../../helpers/form-validations')
-
-/**
- * Validate the login form
- *
- * @param {object} payload - the HTTP body message
- * @returns {object} The result of validation. Object contains a boolean validation result,
- *                   errors tips, and a global message for the whole form.
- */
-function validateSignInForm (payload) {
-	const errors = validateBasicSignInSignUpForm(payload)
-
-	if (!payload || typeof payload.password !== 'string' || payload.password.trim().length === 0) {
-		errors.password = {
-			code: 'EMPTY_PASSWORD'
-		}
-	}
-
-	return errors
-}
+const { validateSignInForm, tokenPayload } = require('./signin-signup-token');
 
 function signin (req, res, next) {
 	const validationErrors = validateSignInForm(req.body)
@@ -44,22 +24,9 @@ function signin (req, res, next) {
 			})
 		}
 
-		const { token, refreshToken, cookieToken, user } = data
+		tokenPayload(res, data);
 
-		if (cookieToken) {
-			res.cookie('token', cookieToken, { maxAge: cookieTokenExpiration, httpOnly: true })
-			return res.status(200).json({
-				payload: { user }
-			}).end()
-		} else {
-			return res.status(200).json({
-				payload: {
-					token,
-					refreshToken,
-					user
-				}
-			}).end()
-		}
+
 	})(req, res, next)
 }
 

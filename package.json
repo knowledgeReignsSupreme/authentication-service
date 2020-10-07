@@ -27,6 +27,7 @@
   "dependencies": {
     "@greenpress/api-kit": "0.1.0",
     "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.5",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.10.5",
     "nodemailer": "^6.4.2",

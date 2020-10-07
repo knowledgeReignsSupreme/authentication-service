@@ -3,7 +3,6 @@ String.prototype.replaceAll = function (search, replacement) {
 }
 
 const { mongoUri } = require('./config')
-const { loadEmailTemplates } = require('./server/services/mailer')
 
 // connect to the database and load models
 require('./server/models').connect(mongoUri)
@@ -13,9 +12,9 @@ require('./server/passport')
 require('./server/routes')
 
 // start the server
-loadEmailTemplates().then(() => {
   require('@greenpress/api-kit')
-    .start('Authentication Service',
-      process.env.PORT || 8000,
-      process.env.IP || '0.0.0.0')
-})
+      .start(
+          'Authentication Service',
+          process.env.PORT || 8000,
+          process.env.IP || '0.0.0.0'
+      )

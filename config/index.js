@@ -1,5 +1,7 @@
 const roles = process.env.ROLES ? process.env.ROLES.split(',') : ['user', 'admin'];
 const privilegedRoles = process.env.PRIVILEGED_ROLES ? process.env.PRIVILEGED_ROLES.split(',') : ['admin'];
+const TEN_MINUTES = 1000 * 60 * 10
+const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30
 
 module.exports = {
 	mongoUri: process.env.MONGO_URI || "mongodb://localhost/auth-service",
@@ -7,20 +9,10 @@ module.exports = {
 	refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || "a secret 2 phrase!!",
 	tokenExpiration: process.env.TOKEN_EXPIRATION || '10m',
 	refreshTokenExpiration: process.env.REFRESH_TOKEN_EXPIRATION || '30d',
-	emailVerificationTokenExpiration: process.env.EMAIL_VERIFICATION_TOKEN_EXPIRATION || '12h',
+	cookieTokenExpiration: Number(process.env.COOKIE_TOKEN_EXPIRATION || THIRTY_DAYS),
+	cookieTokenVerificationTime: Number(process.env.COOKIE_TOKEN_VERIFICATION_TIME || TEN_MINUTES),
 	roles,
 	privilegedRoles,
 	defaultRole: process.env.DEFAULT_ROLE ? process.env.DEFAULT_ROLE : roles[0],
-	applicationName: process.env.APPLICATION_NAME || "Local Blog",
-	applicationUrl: process.env.APPLICATION_URL || "http://localhost:" + (process.env.PORT || 3000),
-	mailProvider: {
-		service: process.env.MAIL_PROVIDER_SERVICE,
-		email: process.env.MAIL_PROVIDER_EMAIL,
-		authType: process.env.MAIL_PROVIDER_AUTH_TYPE || "basic",
-		password: process.env.MAIL_PROVIDER_PW
-	},
-	spamIntervals: {
-		resendVerificationEmail: process.env.RESEND_VERIFICATION_EMAIL_INTERVAL || 30, // in seconds
-		changeEmail: process.env.CHANGE_EMAIL_INTERVAL || 24 * 60 * 60 // in seconds
-	}
+	defaultAuthType: process.env.DEFAULT_AUTH_TYPE || 'cookie',
 };

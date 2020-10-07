@@ -1,31 +1,5 @@
 const passport = require('passport')
-const { validateBasicSignInSignUpForm } = require('../../helpers/form-validations')
-const { sendVerificationEmail, verificationEmailTypes } = require('../services/email-verification')
-
-/**
- * Validate the sign up form
- *
- * @param {object} payload - the HTTP body message
- * @returns {object} The result of validation. Object contains a boolean validation result,
- *                   errors tips, and a global message for the whole form.
- */
-function validateSignUpForm (payload) {
-  const errors = validateBasicSignInSignUpForm(payload)
-
-  if (!payload || (typeof payload.name !== 'string') || !/^[a-zA-Z]+([\-\s]?[a-zA-Z]+)*$/.test(payload.name.trim())) {
-    errors.name = {
-      code: 'INVALID_NAME'
-    }
-  }
-
-  if (!payload || typeof payload.password !== 'string' || payload.password.trim().length < 8) {
-    errors.password = {
-      code: 'INVALID_PASSWORD'
-    }
-  }
-
-  return errors
-}
+const { validateSignUpForm, tokenPayload } = require('./signin-signup-token');
 
 function signup (req, res, next) {
   const validationErrors = validateSignUpForm(req.body)
@@ -34,7 +8,7 @@ function signup (req, res, next) {
     return res.json({ errors: validationErrors })
   }
 
-  return passport.authenticate('local-signup', (err) => {
+  return passport.authenticate('local-signup', (err, data) => {
     if (err) {
       if (err.name === 'MongoError' && err.code === 11000) {
         // the 11000 Mongo code is for a duplication email error
@@ -52,9 +26,8 @@ function signup (req, res, next) {
       })
     }
 
-    return sendVerificationEmail(req.user, verificationEmailTypes.WELCOME)
-      .then(payload => res.json(payload))
-      .catch(err => res.json(err))
+    tokenPayload(res, data);
+
   })(req, res, next)
 }
 

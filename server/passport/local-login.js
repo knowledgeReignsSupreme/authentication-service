@@ -1,55 +1,36 @@
-const User = require('../models/user')
+const { defaultAuthType } = require('../../config')
+const { getUser, comparePassword, setToken } = require('../services/users')
 const PassportLocalStrategy = require('passport-local').Strategy
 
 module.exports = new PassportLocalStrategy({
-  usernameField: 'email',
-  passwordField: 'password',
-  session: false,
-  passReqToCallback: true
+	usernameField: 'email',
+	passwordField: 'password',
+	session: false,
+	passReqToCallback: true
 }, (req, email, password, done) => {
-  const query = { email: email.trim(), tenant: req.headers.tenant }
-  if (req.body.roles && req.body.roles instanceof Array) {
-    query.roles = { $in: req.body.roles }
-  }
-  return User.findOne(query, (err, user) => {
-    if (err) {
-      return done({ code: 'FORM_SUBMISSION_FAILED', info: err })
-    }
+	const query = { email: email.trim(), tenant: req.headers.tenant }
+	const authType = req.body.authType || defaultAuthType
 
-    if (!user) {
-      return done({ code: 'INCORRECT_CREDENTIALS' })
-    }
-
-    if (!user.isEmailVerified) {
-      return done({ code: 'EMAIL_VERIFICATION_REQUIRED' })
-    }
-
-    return user.comparePassword(password.trim(), (passwordErr, isMatch) => {
-      if (passwordErr) {
-        return done({ code: 'FORM_SUBMISSION_FAILED', info: passwordErr })
-      }
-
-      if (!isMatch) {
-        return done({ code: 'INCORRECT_CREDENTIALS' })
-      }
-
-      const token = user.getToken()
-      const refreshToken = user.getRefreshToken()
-
-      return user.save().then(() => {
-        return done(
-          null,
-          {
-            token,
-            refreshToken,
-            user: {
-              email: user.email,
-              name: user.name,
-              roles: user.roles
-            }
-          }
-        )
-      })
-    })
-  })
+	if (req.body.roles && req.body.roles instanceof Array) {
+		query.roles = { $in: req.body.roles }
+	}
+	getUser(query)
+		.then(user => comparePassword(user, password))
+		.then((user) => setToken(user, authType))
+		.then(({ user, token, refreshToken, cookieToken }) => {
+			done(
+				null,
+				{
+					token,
+					refreshToken,
+					cookieToken,
+					user: {
+						email: user.email,
+						name: user.name,
+						roles: user.roles
+					}
+				}
+			)
+		})
+		.catch(done)
 })

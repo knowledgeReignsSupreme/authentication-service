@@ -9,7 +9,7 @@ app
 	.post('/api/signin', require('../controllers/signin'))
 	.post('/api/signup', require('../controllers/signup'))
 	.post('/api/token/refresh', require('./refresh-token'))
-	.post('/api/logout', require('../controllers/logout'))
+	.post('/api/logout', verifyUser, require('../controllers/logout'))
 	.get('/api/me', verifyUser, onlyAuthenticated, require('./me'))
 
 app.use(require('./users'))

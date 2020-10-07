@@ -12,19 +12,11 @@ async function logout(req, res, next) {
 	} else {
 		return next();
 	}
-
-	if (!(await deleteToken(req.body.sub, req.body.tenant, authType, (authType === 'oauth'), relatedToken))) {
-		res.status(500).json({
-			errors: {
-			  token: 'FAILED_TO_DELETE_TOKEN'
-			}
-		  })
-	} else {
-		if (authType === 'cookie') {
-			res = setCookie(res, '', -1);
-		}
-		res.status(200).end();
+	if (authType === 'cookie') {
+		setCookie(res, '', -1);
 	}
+	deleteToken(req.userPayload.sub, req.headers.tenant, authType, (authType === 'oauth'), relatedToken).catch(Promise.resolve)
+	res.status(200).end();
 
 	return next();
 }

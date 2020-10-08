@@ -1,24 +1,26 @@
-const { deleteToken } = require('../services/users');
+const { deleteToken } = require('../services/users')
 const { setCookie } = require('../services/tokens')
 
-async function logout(req, res, next) {
-	let relatedToken, authType;
-	if (req.cookies.token || req.signedCookies.token) {
-		relatedToken = req.cookies.token || req.signedCookies.token;
-		authType = 'cookie';
-	} else if (req.headers.authorization) {
-		relatedToken = req.headers.authorization;
-		authType = 'oauth'
-	} else {
-		return next();
-	}
-	if (authType === 'cookie') {
-		setCookie(res, '', -1);
-	}
-	deleteToken(req.userPayload.sub, req.headers.tenant, authType, (authType === 'oauth'), relatedToken).catch(Promise.resolve)
-	res.status(200).end();
+function removeToken (tenant, userId, authType, token) {
+	deleteToken(tenant, userId , authType, token, (authType === 'oauth'))
+		.catch(Promise.resolve)
+}
 
-	return next();
+async function logout (req, res) {
+	const tenant = req.headers.tenant = req.headers.tenant || '0'
+	const userId = req.userPayload.sub
+
+	let token, authType
+	if (req.cookies.token || req.signedCookies.token) {
+		token = req.cookies.token || req.signedCookies.token
+		authType = 'cookie'
+		setCookie(res, '', -1)
+	} else {
+		token = req.headers.authorization?.split(' ')[1] ?? ''
+		authType = 'oauth'
+	}
+	removeToken(tenant, userId, authType, token)
+	res.status(200).end()
 }
 
 module.exports = logout

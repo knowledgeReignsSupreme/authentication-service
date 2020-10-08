@@ -1,5 +1,5 @@
 
-FROM node:13.3.0
+FROM node:14.5.0
 RUN mkdir /app
 WORKDIR /app
 COPY . .

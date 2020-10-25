@@ -33,7 +33,7 @@ function setCookie (res, cookieId, maxAge = cookieTokenExpiration) {
 	return res
 }
 
-function getSignedToken (user, tokenIdentifier) {
+function getSignedToken (user, tokenIdentifier, expiresIn = tokenExpiration) {
 	const secretParams = {
 		sub: user._id,
 		tenant: user.tenant,
@@ -46,7 +46,7 @@ function getSignedToken (user, tokenIdentifier) {
 	}
 	return {
 		payload: secretParams,
-		token: jwt.sign(secretParams, jwtSecret, { expiresIn: tokenExpiration })
+		token: jwt.sign(secretParams, jwtSecret, { expiresIn })
 	}
 }
 

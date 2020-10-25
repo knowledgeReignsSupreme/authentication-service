@@ -59,7 +59,7 @@ UserSchema.methods.comparePassword = function comparePassword (password, callbac
 	bcrypt.compare(password, this.password, callback)
 }
 
-UserSchema.methods.getToken = function getToken (authType) {
+UserSchema.methods.getToken = function getToken (authType, expiresIn) {
 	let tokenIdentifier
 	if (authType === 'cookie') {
 		tokenIdentifier = getUniqueId()
@@ -68,7 +68,7 @@ UserSchema.methods.getToken = function getToken (authType) {
 			tokenIdentifier
 		})
 	}
-	return getSignedToken(this, tokenIdentifier).token
+	return getSignedToken(this, tokenIdentifier, expiresIn).token
 }
 
 UserSchema.methods.getRefreshToken = function getRefreshToken (relatedToken) {
@@ -105,7 +105,7 @@ UserSchema.methods.deleteToken = function deleteToken (authType, tokenIdentifier
 }
 
 UserSchema.methods.getTokenByRelatedTokens = function getTokenByRelatedTokens (authType, tokenIdentifier) {
-	const token = this.tokens.find(token => token.kind === authType && 
+	const token = this.tokens.find(token => token.kind === authType &&
 									token.metadata.toString().includes(tokenIdentifier));
 
 	return (token ? token.tokenIdentifier : tokenIdentifier)

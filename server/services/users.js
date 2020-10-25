@@ -1,4 +1,5 @@
 const User = require('../models/user')
+const { cookieTokenExpiration } = require('../../config')
 
 async function getUser (query) {
 	try {
@@ -97,7 +98,7 @@ function setOAuthAuthentication (user) {
 }
 
 function setCookieAuthentication (user) {
-	const cookieToken = user.getToken('cookie')
+	const cookieToken = user.getToken('cookie', cookieTokenExpiration / 1000)
 
 	return user.save().then(() => {
 		return { user, cookieToken }

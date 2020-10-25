@@ -27,19 +27,14 @@ async function cookieVerify (req, res, next) {
 			setUserPayload(payload, req, next)
 			return
 		}
-		console.log('try to reset token')
 		const newCookieIdentifier = getUniqueId()
 		const user = await getUserIfTokenExists(payload.tenant, payload.sub, payload.tokenIdentifier)
 		await updateToken(user, 'cookie', payload.tokenIdentifier, newCookieIdentifier)
-		console.log('user updated');
 		const { token: newToken, payload: newPayload } = getSignedToken(user, newCookieIdentifier, cookieTokenExpiration / 1000)
-
-		console.log('get new token', token)
 
 		setCookie(res, newToken)
 		setUserPayload(newPayload, req, next)
 	} catch (e) {
-		console.log('error', e)
 		next()
 	}
 }

@@ -1,7 +1,7 @@
 const User = require('../models/user')
 const { cookieTokenExpiration } = require('../../config')
 
-async function getUser (query) {
+async function getUser(query) {
 	try {
 		const user = await User.findOne(query)
 		if (user) {
@@ -14,7 +14,12 @@ async function getUser (query) {
 	throw { code: 'INCORRECT_CREDENTIALS' }
 }
 
-function updateUser (user, { email = null, password = null, name = null, roles = null }) {
+function updateUser(user, { email = null, password = null, name = null, roles = null }) {
+	let directUpdate
+	if (!(user instanceof User)) {
+		directUpdate = { _id: user._id, tenant: user.tenant }
+		user = {}
+	}
 	if (email) {
 		user.email = email
 	}
@@ -31,17 +36,21 @@ function updateUser (user, { email = null, password = null, name = null, roles =
 		user.roles = roles
 	}
 
-	return user.save()
+	return (
+		directUpdate ?
+			User.updateOne(directUpdate, { $set: user }) :
+			user.save()
+	)
 		.catch(err => Promise.reject({ code: 'UPDATE_USER_FAILED', info: err }))
 }
 
-function deleteUser (userId, tenant) {
+function deleteUser(userId, tenant) {
 	User.deleteOne({ _id: userId, tenant })
-		.then((() => Promise.resolve({ code: 'USER_DELETED_SUCCESSFULLY', info: user._id })))
+		.then((() => Promise.resolve({ code: 'USER_DELETED_SUCCESSFULLY', info: userId })))
 		.catch((error) => Promise.reject({ code: 'USER_DELETE_FAILED', info: error }))
 }
 
-function comparePassword (user, password) {
+function comparePassword(user, password) {
 	return new Promise((resolve, reject) => {
 		return user.comparePassword(password.trim(), (passwordErr, isMatch) => {
 			if (passwordErr) {
@@ -55,7 +64,7 @@ function comparePassword (user, password) {
 	})
 }
 
-function setToken (user, authType) {
+function setToken(user, authType) {
 	if (authType === 'oauth') {
 		return setOAuthAuthentication(user, authType)
 	}
@@ -65,12 +74,12 @@ function setToken (user, authType) {
 	throw { code: 'INVALID_AUTH_TYPE' }
 }
 
-function updateToken (user, authType, currentToken, newToken) {
+function updateToken(user, authType, currentToken, newToken) {
 	return user.updateToken(authType, currentToken, newToken)
 		.catch(err => Promise.reject({ code: 'UPDATE_TOKEN_FAILED', info: err }))
 }
 
-async function deleteToken (tenant, userId, authType, token, isRelatedToken) {
+async function deleteToken(tenant, userId, authType, token, isRelatedToken) {
 	try {
 		const user = await User.findOne({ _id: userId, tenant })
 		if (isRelatedToken) {
@@ -84,7 +93,7 @@ async function deleteToken (tenant, userId, authType, token, isRelatedToken) {
 	return true
 }
 
-function setOAuthAuthentication (user) {
+function setOAuthAuthentication(user) {
 	const token = user.getToken('oauth')
 	const refreshToken = user.getRefreshToken(token)
 
@@ -97,7 +106,7 @@ function setOAuthAuthentication (user) {
 	})
 }
 
-function setCookieAuthentication (user) {
+function setCookieAuthentication(user) {
 	const cookieToken = user.getToken('cookie', cookieTokenExpiration / 1000)
 
 	return user.save().then(() => {
@@ -105,7 +114,7 @@ function setCookieAuthentication (user) {
 	})
 }
 
-function getUserIfTokenExists (tenant, userId, tokenId) {
+function getUserIfTokenExists(tenant, userId, tokenId) {
 	return User.findOne({ _id: userId, tenant, 'tokens.tokenIdentifier': tokenId })
 		.then(user => user || Promise.reject())
 		.catch(() => Promise.reject({ code: 'USER_WITH_TOKEN_NOT_EXISTS' }))

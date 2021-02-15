@@ -1,7 +1,3 @@
-String.prototype.replaceAll = function (search, replacement) {
-  return this.replace(new RegExp(search, 'g'), replacement)
-}
-
 const { mongoUri } = require('./config')
 
 // connect to the database and load models

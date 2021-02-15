@@ -10,9 +10,7 @@ function init () {
     email: process.env.EMAIL || 'test@test.com',
     name: 'Administrator',
     password: process.env.PASSWORD || 'admin',
-    roles: [config.privilegedRoles[0]],
-    isEmailVerified: true,
-    emailVerificationTokenCreated: new Date()
+    roles: [config.privilegedRoles[0]]
   })
 
   return user.save().then((lastUser) => {

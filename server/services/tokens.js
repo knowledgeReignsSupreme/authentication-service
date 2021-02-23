@@ -29,7 +29,10 @@ function getUniqueId (creationTime = Date.now().toString()) {
 }
 
 function setCookie (res, cookieId, maxAge = cookieTokenExpiration) {
-	res.cookie('token', cookieId, { maxAge, httpOnly: true })
+	const { applicationUrl } = require('../../config')
+	const finalUrl = '.' + new URL(applicationUrl).hostname
+	
+	res.cookie('token', cookieId, { maxAge, httpOnly: true, domain: finalUrl })
 	return res
 }
 

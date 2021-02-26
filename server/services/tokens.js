@@ -4,7 +4,7 @@ const { jwtSecret, refreshTokenSecret, tokenExpiration,
 
 let finalDomainUrl = undefined
 if (applicationUrl) {
-	finalDomainUrl = '.' + new URL(applicationUrl).hostname
+	finalDomainUrl = new URL(applicationUrl).hostname.replace('www', '')
 }
 
 function verifyToken (token, tenant) {

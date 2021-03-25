@@ -1,11 +1,6 @@
 const jwt = require('jsonwebtoken')
-const { jwtSecret, refreshTokenSecret, tokenExpiration, 
-		cookieTokenExpiration, applicationUrl } = require('../../config')
-
-let finalDomainUrl = undefined
-if (applicationUrl) {
-	finalDomainUrl = new URL(applicationUrl).hostname.replace('www', '')
-}
+const { jwtSecret, refreshTokenSecret, tokenExpiration,
+		cookieTokenExpiration, cookieBaseDomain } = require('../../config')
 
 function verifyToken (token, tenant) {
 	if (!token.trim()) {
@@ -36,8 +31,8 @@ function getUniqueId (creationTime = Date.now().toString()) {
 
 function getCookieParameters(cookieId, maxAge) {
 	let cookieParams = { maxAge, httpOnly: true }
-	if (finalDomainUrl) {
-		cookieParams.domain = finalDomainUrl
+	if (cookieBaseDomain) {
+		cookieParams.domain = cookieBaseDomain
 	}
 
 	return ['token', cookieId, cookieParams]

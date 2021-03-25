@@ -33,6 +33,8 @@ function getCookieParameters(cookieId, maxAge) {
 	let cookieParams = { maxAge, httpOnly: true }
 	if (cookieBaseDomain) {
 		cookieParams.domain = cookieBaseDomain
+		cookieParams.sameSite = 'None'
+		cookieParams.secure = true
 	}
 
 	return ['token', cookieId, cookieParams]

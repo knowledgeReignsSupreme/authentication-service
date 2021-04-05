@@ -1,19 +1,21 @@
 const jwt = require('jsonwebtoken')
-const { jwtSecret, refreshTokenSecret, tokenExpiration,
-		cookieTokenExpiration, cookieBaseDomain } = require('../../config')
+const {
+	jwtSecret, refreshTokenSecret, tokenExpiration,
+	cookieTokenExpiration, cookieBaseDomain
+} = require('../../config')
 
-function verifyToken (token, tenant) {
+function verifyToken(token, tenant) {
 	if (!token.trim()) {
 		return Promise.reject()
 	}
 	return verify(token, tenant, jwtSecret)
 }
 
-function verifyRefreshToken (refreshToken, tenant) {
+function verifyRefreshToken(refreshToken, tenant) {
 	return verify(refreshToken, tenant, refreshTokenSecret)
 }
 
-function verify (token, tenant, secret) {
+function verify(token, tenant, secret) {
 	return new Promise((resolve, reject) => {
 		jwt.verify(token, secret, (err, decoded) => {
 			if (err || !decoded || decoded.tenant !== tenant) {
@@ -25,7 +27,7 @@ function verify (token, tenant, secret) {
 	})
 }
 
-function getUniqueId (creationTime = Date.now().toString()) {
+function getUniqueId(creationTime = Date.now().toString()) {
 	return creationTime + ':' + Buffer.from(Math.random().toString()).toString('base64')
 }
 
@@ -40,13 +42,13 @@ function getCookieParameters(cookieId, maxAge) {
 	return ['token', cookieId, cookieParams]
 }
 
-function setCookie (res, cookieId, maxAge = cookieTokenExpiration) {
-	const [ type, id, parameters ] = getCookieParameters(cookieId, maxAge)
+function setCookie(res, cookieId, maxAge = cookieTokenExpiration) {
+	const [type, id, parameters] = getCookieParameters(cookieId, maxAge)
 	res.cookie(type, id, parameters)
 	return res
 }
 
-function getSignedToken (user, tokenIdentifier, expiresIn = tokenExpiration) {
+function getSignedToken(user, tokenIdentifier, expiresIn = tokenExpiration) {
 	const secretParams = {
 		sub: user._id,
 		tenant: user.tenant,

@@ -5,8 +5,8 @@ const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30
 
 module.exports = {
 	mongoUri: process.env.MONGO_URI || 'mongodb://localhost/auth-service',
-	cookieBaseDomain: process.env.COOKIE_BASE_DOMAIN || process.env.APPLICATION_URL ?
-		new URL(process.env.APPLICATION_URL).hostname.replace(/www\.|www/, '') : null,
+	cookieBaseDomain: process.env.COOKIE_BASE_DOMAIN ||
+		(process.env.APPLICATION_URL ? new URL(process.env.APPLICATION_URL).hostname.replace(/www\.|www/, '') : null),
 	jwtSecret: process.env.JWT_SECRET || 'abcddddd',
 	refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || 'a secret 2 phrase!!',
 	tokenExpiration: process.env.TOKEN_EXPIRATION || '10m',

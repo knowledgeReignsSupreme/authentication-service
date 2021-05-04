@@ -1,4 +1,6 @@
 const { Router } = require('express');
+const { onlyAuthenticated } = require('../middleware/auth-check');
+const verifyUser = require('../middleware/verify-user');
 
 const router = Router();
 
@@ -12,3 +14,5 @@ router
     onlyAuthenticated,
     require('../controllers/logout')
   );
+
+module.exports = router;
